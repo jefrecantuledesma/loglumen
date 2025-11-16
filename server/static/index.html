@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loglumen Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Loglumen Security Dashboard</h1>
+            <div class="header-stats">
+                <div class="stat-box">
+                    <div class="stat-label">Total Events</div>
+                    <div class="stat-value" id="total-events">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Last Updated</div>
+                    <div class="stat-value" id="last-updated">Never</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="loading">
+            Loading dashboard data...
+        </div>
+
+        <!-- Error message -->
+        <div id="error" class="error" style="display: none;">
+            <strong>Error:</strong> <span id="error-message"></span>
+        </div>
+
+        <!-- No data message -->
+        <div id="no-data" class="info" style="display: none;">
+            No events collected yet. Run the Python agent to start collecting events.
+        </div>
+
+        <!-- Categories Grid -->
+        <div id="categories" class="categories-grid">
+            <!-- Categories will be inserted here by JavaScript -->
+        </div>
+
+        <!-- Recent Events Section -->
+        <div id="recent-events-section" style="display: none;">
+            <div class="recent-events-header">
+                <h2>Recent Events</h2>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="severity-filter">Severity:</label>
+                        <select id="severity-filter" class="filter-select">
+                            <option value="all">All</option>
+                            <option value="info">Info</option>
+                            <option value="warning">Warning</option>
+                            <option value="error">Error</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="category-filter">Category:</label>
+                        <select id="category-filter" class="filter-select">
+                            <option value="all">All</option>
+                            <option value="auth">Auth</option>
+                            <option value="system">System</option>
+                            <option value="service">Service</option>
+                            <option value="software">Software</option>
+                        </select>
+                    </div>
+                    <button id="reset-filters" class="reset-button">Reset Filters</button>
+                </div>
+            </div>
+            <div id="recent-events" class="recent-events">
+                <!-- Recent events will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/dashboard.js"></script>
+</body>
+</html>
