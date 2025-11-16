@@ -1,0 +1,70 @@
+# Loglumen Agent Configuration
+# This file configures the log collection agent
+
+[agent]
+# Unique identifier for this agent/machine
+client_name = "dev-machine-01"
+
+# IPv4 address of this machine (auto-detected if not specified)
+# client_ipv4 = "192.168.0.100"
+
+# Operating system (auto-detected if not specified)
+# Valid values: "linux", "windows"
+# os = "linux"
+
+[server]
+# IP address or hostname of the Loglumen server
+server_ip = "192.168.0.254"
+
+# Port the server listens on
+server_port = 8080
+
+# Use HTTPS for secure communication
+use_https = false
+
+# API endpoint path for event submission
+api_path = "/api/events"
+
+# API key for authentication (optional)
+# api_key = "your-secret-api-key-here"
+
+# Connection timeout in seconds
+timeout = 30
+
+# Retry settings
+max_retries = 3
+retry_delay = 5
+
+[collection]
+# How often to collect events (in seconds)
+collection_interval = 60
+
+# Maximum lines to process per log file
+max_lines_per_log = 1000
+
+# For journald-based collectors, how many hours back to search
+hours_lookback = 1
+
+# Which event categories to collect
+# Valid categories: auth, system, service, software
+enabled_categories = ["auth", "system", "service", "software"]
+
+# Maximum events to send in a single batch
+max_events_per_batch = 500
+
+[logging]
+# Log level for the agent itself
+# Valid values: DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_level = "INFO"
+
+# Where to write agent logs
+log_file = "/var/log/loglumen-agent.log"
+
+# For development/testing, you can log to console
+log_to_console = true
+
+# Rotate logs when they reach this size (in MB)
+max_log_size_mb = 10
+
+# Keep this many old log files
+max_log_files = 5
