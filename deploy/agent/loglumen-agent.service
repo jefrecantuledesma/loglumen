@@ -1,0 +1,15 @@
+[Unit]
+Description=Loglumen Security Event Agent
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=__WORK_DIR__
+Environment=PYTHONUNBUFFERED=1
+ExecStart=__PYTHON_BIN__ __AGENT_ENTRY__ --config __CONFIG_PATH__
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

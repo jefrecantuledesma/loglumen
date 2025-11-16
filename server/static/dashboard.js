@@ -1,6 +1,8 @@
 // Dashboard state
 let charts = {};
 let allRecentEvents = []; // Store all events for filtering
+let allNodes = [];
+let showAllNodes = false;
 let currentFilters = {
     severity: 'all',
     category: 'all'
@@ -9,10 +11,12 @@ const REFRESH_INTERVAL = 5000; // 5 seconds
 
 // Color schemes for categories
 const CATEGORY_COLORS = {
-    auth: ['#3498db', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6', '#1abc9c'],
-    system: ['#e74c3c', '#c0392b', '#e67e22', '#d35400', '#f39c12', '#f1c40f'],
-    service: ['#9b59b6', '#8e44ad', '#3498db', '#2980b9', '#1abc9c', '#16a085'],
-    software: ['#2ecc71', '#27ae60', '#1abc9c', '#16a085', '#3498db', '#2980b9']
+    authentication: ['#3498db', '#2980b9', '#5dade2', '#85c1e9', '#aed6f1', '#d6eaf8'],
+    privilege_escalation: ['#e67e22', '#d35400', '#f39c12', '#f1c40f', '#f4d03f', '#f7dc6f'],
+    remote_access: ['#9b59b6', '#8e44ad', '#af7ac5', '#bb8fce', '#c39bd3', '#d2b4de'],
+    system: ['#e74c3c', '#c0392b', '#ec7063', '#f1948a', '#f5b7b1', '#fadbd8'],
+    service: ['#16a085', '#138d75', '#48c9b0', '#76d7c4', '#a2d9ce', '#d1f2eb'],
+    software: ['#2ecc71', '#27ae60', '#58d68d', '#82e0aa', '#abebc6', '#d5f4e6']
 };
 
 // Initialize dashboard
@@ -21,6 +25,7 @@ async function init() {
 
     // Setup filter event listeners
     setupFilters();
+    setupNodesUI();
 
     await fetchAndUpdate();
     // Auto-refresh every 5 seconds
@@ -49,6 +54,16 @@ function setupFilters() {
         currentFilters.severity = 'all';
         currentFilters.category = 'all';
         applyFilters();
+    });
+}
+
+function setupNodesUI() {
+    const toggleButton = document.getElementById('toggle-nodes');
+    if (!toggleButton) return;
+
+    toggleButton.addEventListener('click', () => {
+        showAllNodes = !showAllNodes;
+        renderNodes();
     });
 }
 
@@ -95,6 +110,9 @@ function updateDashboard(data) {
 
     // Update categories
     updateCategories(data.categories);
+
+    // Update nodes
+    updateNodes(data.nodes || []);
 
     // Update recent events
     updateRecentEvents(data.categories);
@@ -283,10 +301,146 @@ function updateFilterCount(filtered, total) {
     }
 }
 
+function updateNodes(nodes = []) {
+    const section = document.getElementById('nodes-section');
+    const toggleButton = document.getElementById('toggle-nodes');
+
+    allNodes = nodes || [];
+
+    if (!section) {
+        return;
+    }
+
+    if (!allNodes.length) {
+        section.style.display = 'none';
+        if (toggleButton) {
+            toggleButton.style.display = 'none';
+        }
+        return;
+    }
+
+    section.style.display = 'block';
+    renderNodes();
+}
+
+function renderNodes() {
+    const grid = document.getElementById('nodes-grid');
+    const toggleButton = document.getElementById('toggle-nodes');
+
+    if (!grid) {
+        return;
+    }
+
+    grid.innerHTML = '';
+
+    const nodesToShow = showAllNodes ? allNodes : allNodes.slice(0, 4);
+
+    nodesToShow.forEach(node => {
+        grid.appendChild(createNodeCard(node));
+    });
+
+    if (!toggleButton) {
+        return;
+    }
+
+    if (allNodes.length <= 4) {
+        toggleButton.style.display = 'none';
+    } else {
+        toggleButton.style.display = 'inline-flex';
+        toggleButton.textContent = showAllNodes ? 'Show Top Nodes' : 'Show All Nodes';
+    }
+}
+
+function createNodeCard(node) {
+    const card = document.createElement('div');
+    card.className = 'node-card';
+
+    const lastEventText = node.last_event_time
+        ? formatEventTimestamp(node.last_event_time)
+        : 'No events yet';
+
+    const severitySummary = formatSeveritySummary(node.severity_counts || {});
+    const categorySummary = formatCategorySummary(node.categories || {});
+
+    card.innerHTML = `
+        <div class="node-name">${node.host}</div>
+        <div class="node-ip">${node.host_ipv4}</div>
+        <div class="node-count">${node.total_events.toLocaleString()} events</div>
+        <div class="node-metadata">
+            <span>Last event: ${lastEventText}</span>
+            <span>Categories: ${categorySummary}</span>
+            <span>Severity: ${severitySummary}</span>
+        </div>
+    `;
+
+    card.addEventListener('click', () => navigateToNode(node.host));
+
+    const button = document.createElement('button');
+    button.className = 'node-view-button';
+    button.textContent = 'View Logs';
+    button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        navigateToNode(node.host);
+    });
+
+    card.appendChild(button);
+
+    return card;
+}
+
+function navigateToNode(host) {
+    window.location.href = `/node.html?host=${encodeURIComponent(host)}`;
+}
+
+function formatSeveritySummary(counts) {
+    if (!counts || Object.keys(counts).length === 0) {
+        return 'No severity data';
+    }
+
+    const order = ['critical', 'error', 'warning', 'info'];
+    const summary = order
+        .filter(sev => counts[sev])
+        .map(sev => `${sev}: ${counts[sev]}`)
+        .join(' • ');
+
+    return summary || 'Severity data unavailable';
+}
+
+function formatCategorySummary(counts) {
+    if (!counts || Object.keys(counts).length === 0) {
+        return 'No categories';
+    }
+
+    const entries = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([name, value]) => `${formatEventType(name)} (${value})`);
+
+    const remainder = Object.keys(counts).length - entries.length;
+    if (remainder > 0) {
+        entries.push(`+${remainder} more`);
+    }
+
+    return entries.join(', ');
+}
+
 // Create event item HTML
+function formatEventTimestamp(timestamp) {
+    if (!timestamp) {
+        return new Date().toLocaleString();
+    }
+
+    const parsed = Date.parse(timestamp);
+    if (Number.isNaN(parsed)) {
+        // Fall back to rendering the original string so users still see something meaningful
+        return `${timestamp} (raw)`;
+    }
+
+    return new Date(parsed).toLocaleString();
+}
+
 function createEventItem(event) {
-    const time = new Date(event.time);
-    const timeStr = time.toLocaleString();
+    const timeStr = formatEventTimestamp(event.time);
 
     return `
         <div class="event-item severity-${event.severity}">

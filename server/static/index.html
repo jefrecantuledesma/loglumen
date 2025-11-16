@@ -44,6 +44,17 @@
             <!-- Categories will be inserted here by JavaScript -->
         </div>
 
+        <!-- Nodes Section -->
+        <section id="nodes-section" class="nodes-section" style="display: none;">
+            <div class="nodes-header">
+                <h2>Nodes</h2>
+                <button id="toggle-nodes" class="toggle-nodes-button">Show All Nodes</button>
+            </div>
+            <div id="nodes-grid" class="nodes-grid">
+                <!-- Node cards inserted here -->
+            </div>
+        </section>
+
         <!-- Recent Events Section -->
         <div id="recent-events-section" style="display: none;">
             <div class="recent-events-header">
@@ -63,10 +74,12 @@
                         <label for="category-filter">Category:</label>
                         <select id="category-filter" class="filter-select">
                             <option value="all">All</option>
-                            <option value="auth">Auth</option>
-                            <option value="system">System</option>
-                            <option value="service">Service</option>
-                            <option value="software">Software</option>
+                            <option value="authentication">Authentication</option>
+                            <option value="privilege_escalation">Privilege Escalation</option>
+                            <option value="remote_access">Remote Access</option>
+                            <option value="system">System Crashes</option>
+                            <option value="service">Service Issues</option>
+                            <option value="software">Software Changes</option>
                         </select>
                     </div>
                     <button id="reset-filters" class="reset-button">Reset Filters</button>

@@ -29,10 +29,31 @@ cargo build --release
 
 # Configure the server
 cp ../config/server.example.toml ../config/server.toml
-nano ../config/server.toml  # Edit with your settings
+nano ../config/server.toml  # Set [server].bind_address (e.g., 0.0.0.0:8080)
 
 # Run the server
 ./target/release/server
+
+#### Install as a systemd Service (Linux)
+
+To have the server start automatically at boot with sudo privileges, use the helper scripts:
+
+```bash
+# Install and enable the service
+sudo bash scripts/install_loglumen_server.sh
+
+# Later, stop and remove it
+sudo bash scripts/uninstall_loglumen_server.sh
+```
+
+The install script:
+- Builds the server with `cargo build --release`
+- Installs the binary to `/usr/local/bin/loglumen-server`
+- Ensures `/etc/loglumen/server.toml` exists (copying your repo config or the example)
+- Generates `/etc/systemd/system/loglumen-server.service` from `deploy/server/loglumen-server.service`
+- Runs `systemctl enable --now loglumen-server.service`
+
+The uninstall script disables/stops the service, removes the systemd unit, and deletes the installed binary (your `/etc/loglumen/server.toml` is left untouched so you can reinstall later).
 ```
 
 #### Deploy the Agent (On Each Monitored Machine)
@@ -55,6 +76,41 @@ nano ../config/agent.toml  # Set server IP and client name
 sudo python main.py
 ```
 
+#### Install Agent as a systemd Service (Linux)
+
+To run the Python agent automatically on boot with required privileges:
+
+```bash
+# Install and enable the agent service
+sudo bash scripts/install_loglumen_agent.sh
+
+# Later, stop and remove it
+sudo bash scripts/uninstall_loglumen_agent.sh
+```
+
+The install script:
+- Installs Python dependencies (if `agent/requirements.txt` exists)
+- Copies `config/agent.toml` (or the example) into `/etc/loglumen/agent.toml` if missing
+- Generates `/etc/systemd/system/loglumen-agent.service` from `deploy/agent/loglumen-agent.service`
+- Runs the agent via Python using that config and enables it with `systemctl`
+
+The uninstall script disables/stops the service and removes the systemd unit but leaves `/etc/loglumen/agent.toml` intact for future installs.
+
+#### Install Agent on Windows (Scheduled Task)
+
+Windows lacks systemd, so we provide PowerShell scripts that register a startup scheduled task running the agent with SYSTEM privileges:
+
+```powershell
+# From an elevated PowerShell prompt
+Set-Location path\to\loglumen
+pwsh -File scripts/windows/install_loglumen_agent.ps1
+
+# To remove it later
+pwsh -File scripts/windows/uninstall_loglumen_agent.ps1
+```
+
+The install script copies `config\agent.toml` (or the example) into `%ProgramData%\Loglumen\agent.toml` if it does not exist, then registers a `LoglumenAgent` task that launches `python main.py --config %ProgramData%\Loglumen\agent.toml` at startup. The uninstall script stops and deletes that scheduled task but preserves the configuration file so you can reinstall later.
+
 ### Option 2: Docker Deployment (Recommended)
 
 Docker makes deployment easier and more consistent across different environments.
@@ -65,19 +121,48 @@ Docker makes deployment easier and more consistent across different environments
 
 #### Deploy Server with Docker
 
-```bash
-# Create Dockerfile for server (example)
-cd loglumen/server
-docker build -t loglumen-server .
+A production-ready Dockerfile now lives at `server/Dockerfile`. It builds a static
+Rust binary and exposes the HTTP API/dashboard on port 8080 with the
+`LOGLUMEN_BIND_ADDRESS` environment variable defaulting to `0.0.0.0:8080`.
 
-# Run the server container
+```bash
+# From the repo root
+docker build -t loglumen-server -f server/Dockerfile server
+
+# Run the server container (Linux/macOS hosts)
 docker run -d \
   --name loglumen-server \
-  -p 8080:8080 \
-  -v /var/lib/loglumen:/data \
-  -v /etc/loglumen/server.toml:/app/config/server.toml \
+  -p 0.0.0.0:8080:8080 \
+  -e LOGLUMEN_BIND_ADDRESS=0.0.0.0:8080 \
+  -v $(pwd)/config/server.toml:/config/server.toml:ro \
   loglumen-server
+
+# Open the firewall (Ubuntu example)
+sudo ufw allow 8080/tcp
 ```
+```
+
+Docker Compose manifests are provided for both Linux and Windows hosts:
+
+- `deploy/server/docker-compose.linux.yml`
+- `deploy/server/docker-compose.windows.yml`
+
+```bash
+# Linux/macOS
+docker compose -f deploy/server/docker-compose.linux.yml up -d
+
+# Windows PowerShell
+docker compose -f deploy/server/docker-compose.windows.yml up -d
+```
+
+Both files build the image from `server/Dockerfile`, publish port 8080, and mount
+`config/server.toml` into `/config/server.toml` (adjust the host path if your
+config lives elsewhere).
+
+Make sure your OS firewall allows inbound TCP 8080. Examples:
+- Linux (UFW): `sudo ufw allow 8080/tcp`
+- Windows PowerShell (admin): `netsh advfirewall firewall add rule name="Loglumen" dir=in action=allow protocol=TCP localport=8080`
+- macOS: open System Settings → Network → Firewall and allow Docker Desktop or add a rule for the container port.
 
 #### Deploy Agent with Docker
 

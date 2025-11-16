@@ -1,0 +1,15 @@
+[Unit]
+Description=Loglumen Security Event Server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=__WORK_DIR__
+ExecStart=__BINARY_PATH__
+Environment=LOGLUMEN_SERVER_CONFIG=__CONFIG_PATH__
+Restart=on-failure
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

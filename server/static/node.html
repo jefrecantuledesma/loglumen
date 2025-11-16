@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loglumen Node Detail</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">&larr; Back to Dashboard</a>
+
+        <section class="node-detail" id="node-detail">
+            <div class="node-detail-header">
+                <h1 id="node-name">Node</h1>
+                <div class="node-detail-meta">
+                    <span id="node-ip">IP:</span>
+                    <span id="node-total">0 events</span>
+                    <span id="node-last">Last event: --</span>
+                </div>
+            </div>
+        </section>
+
+        <div id="node-loading" class="loading">Loading node data...</div>
+        <div id="node-error" class="error" style="display: none;">
+            <strong>Error:</strong> <span id="node-error-message"></span>
+        </div>
+        <div id="node-empty" class="info" style="display: none;">
+            No events recorded for this node yet.
+        </div>
+
+        <section id="node-events-section" class="node-events-section" style="display: none;">
+            <div class="recent-events-header">
+                <h2 id="node-events-title">Node Events</h2>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="node-severity-filter">Severity:</label>
+                        <select id="node-severity-filter" class="filter-select">
+                            <option value="all">All</option>
+                            <option value="info">Info</option>
+                            <option value="warning">Warning</option>
+                            <option value="error">Error</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="node-category-filter">Category:</label>
+                        <select id="node-category-filter" class="filter-select">
+                            <option value="all">All</option>
+                            <option value="authentication">Authentication</option>
+                            <option value="privilege_escalation">Privilege Escalation</option>
+                            <option value="remote_access">Remote Access</option>
+                            <option value="system">System Crashes</option>
+                            <option value="service">Service Issues</option>
+                            <option value="software">Software Changes</option>
+                        </select>
+                    </div>
+                    <button id="node-reset-filters" class="reset-button">Reset Filters</button>
+                </div>
+            </div>
+            <div id="node-events" class="recent-events"></div>
+        </section>
+    </div>
+
+    <script src="/node.js"></script>
+</body>
+</html>

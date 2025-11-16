@@ -46,8 +46,8 @@ max_lines_per_log = 1000
 hours_lookback = 1
 
 # Which event categories to collect
-# Valid categories: auth, system, service, software
-enabled_categories = ["auth", "system", "service", "software"]
+# Valid categories: authentication, privilege_escalation, remote_access, system, service, software
+enabled_categories = ["authentication", "privilege_escalation", "remote_access", "system", "service", "software"]
 
 # Maximum events to send in a single batch
 max_events_per_batch = 500

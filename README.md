@@ -79,13 +79,15 @@ cargo build --release
 
 # Copy and configure the server settings
 cp ../config/server.example.toml ../config/server.toml
-# Edit server.toml with your preferences
+# Edit server.toml and set [server].bind_address (e.g., 0.0.0.0:8080 for LAN access)
 
 # Run the server
 cargo run --release
 ```
 
-The server will start and listen for incoming events from agents.
+The server uses the `LOGLUMEN_BIND_ADDRESS` environment variable if set; otherwise it
+loads `[server].bind_address` from `config/server.toml` (falling back to the example file)
+and defaults to `0.0.0.0:8080`. Once running, it listens for incoming events from agents.
 
 ### 2. Set Up Agents on Each Machine
 

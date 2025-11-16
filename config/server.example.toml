@@ -1,0 +1,4 @@
+[server]
+# Address and port the HTTP server should listen on.
+# Use 0.0.0.0 to accept connections from other machines on the network.
+bind_address = "0.0.0.0:8080"

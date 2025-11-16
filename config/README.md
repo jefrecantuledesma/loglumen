@@ -13,6 +13,25 @@ cp config/server.example.toml config/server.toml
 nano config/server.toml  # or use any text editor
 ```
 
+## Server Configuration (server.toml)
+
+The server configuration currently supports a single required setting:
+
+```toml
+[server]
+# Bind to localhost for development or 0.0.0.0 for LAN access
+bind_address = "0.0.0.0:8080"
+```
+
+| Field | Type | Required | Description | Example |
+|-------|------|----------|-------------|---------|
+| `bind_address` | string | Yes | Interface and port Actix should listen on | `"127.0.0.1:8080"` or `"0.0.0.0:8080"` |
+
+Runtime overrides:
+- Set the `LOGLUMEN_BIND_ADDRESS` environment variable to force a specific value (e.g., `export LOGLUMEN_BIND_ADDRESS=127.0.0.1:9090`).
+- Set `LOGLUMEN_SERVER_CONFIG` to point at an alternate TOML file if you store configs outside the repo.
+- If no config is found, the server falls back to `0.0.0.0:8080`.
+
 ### For the Agent
 ```bash
 # Copy the example configuration
@@ -390,4 +409,3 @@ use_https = true
 collection_interval = 60  # Every minute
 max_events_per_batch = 500
 ```
-

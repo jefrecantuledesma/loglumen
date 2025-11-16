@@ -106,7 +106,7 @@ class JournaldAuthCollector:
                 '--no-pager',
                 '-n', str(max_lines),
                 '-o', 'short-iso',  # ISO timestamp format
-                '--grep', r'(sshd|sudo|su\[|login|authentication|session opened|session closed|Accepted|Failed)'
+                '--grep', r'(sshd|sudo|su\[|login|authentication|session opened|session closed|Accepted|Failed|COMMAND=)'
             ]
 
             result = subprocess.run(
@@ -216,7 +216,7 @@ class JournaldAuthCollector:
             port = int(port_match.group(1)) if port_match else None
 
             return create_event(
-                category="auth",
+                category="remote_access",
                 event_type="ssh_login_success",
                 severity="info",
                 message=f"User {username} logged in via SSH from {remote_ip}",
@@ -272,7 +272,7 @@ class JournaldAuthCollector:
                 reason = "Authentication failed"
 
             return create_event(
-                category="auth",
+                category="remote_access",
                 event_type="ssh_login_failed",
                 severity="warning",
                 message=f"Failed SSH login for {username} from {remote_ip} - {reason}",
@@ -322,7 +322,7 @@ class JournaldAuthCollector:
             pwd = pwd_match.group(1) if pwd_match else "unknown"
 
             return create_event(
-                category="privilege",
+                category="privilege_escalation",
                 event_type="sudo_used",
                 severity="info",
                 message=f"User {username} used sudo to run: {command}",
@@ -369,7 +369,7 @@ class JournaldAuthCollector:
             message = f"User {username} {'switched to' if success else 'failed to switch to'} {target_user}"
 
             return create_event(
-                category="privilege",
+                category="privilege_escalation",
                 event_type=event_type,
                 severity=severity,
                 message=message,

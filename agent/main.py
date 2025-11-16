@@ -26,6 +26,7 @@ import sys
 import time
 import signal
 import argparse
+import platform
 from datetime import datetime
 from typing import List, Dict, Any
 
@@ -35,12 +36,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'collectors'))
 # Import configuration and sender
 from config_loader import load_config, ConfigurationError
 from sender import EventSender, SenderError
-
-# Import all collectors
-from linux.auth_unified import collect_auth_events
-from linux.system import collect_system_events
-from linux.service import collect_service_events
-from linux.software import collect_software_events
 
 
 class LoglumenAgent:
@@ -67,6 +62,10 @@ class LoglumenAgent:
         # Create sender
         self.sender = EventSender(self.server_config)
 
+        # Detect OS and load collectors
+        self.os_type = self._detect_os()
+        print(f"[INFO] Detected operating system: {self.os_type}")
+
         # Statistics
         self.total_collections = 0
         self.total_events_collected = 0
@@ -85,6 +84,34 @@ class LoglumenAgent:
         print("\n[INFO] Shutdown signal received, stopping gracefully...")
         self.running = False
 
+    def _detect_os(self) -> str:
+        """
+        Determine which operating system collectors to use.
+
+        Returns:
+            str: 'linux' or 'windows'
+        """
+        configured = self.config.get('agent', 'os', None)
+        if configured:
+            configured = configured.lower()
+            if configured in ('linux', 'windows'):
+                return configured
+            else:
+                print(f"[WARN] Unknown agent.os '{configured}' - falling back to auto-detect")
+
+        system_name = platform.system().lower()
+        if 'windows' in system_name:
+            return 'windows'
+        if 'linux' in system_name:
+            return 'linux'
+
+        raise ConfigurationError(f"Unsupported operating system: {platform.system()}")
+
+    def _category_enabled(self, enabled: List[str], *names: str) -> bool:
+        """Return True if any provided category alias is enabled."""
+        normalized = [cat.lower() for cat in enabled]
+        return any(name.lower() in normalized for name in names)
+
     def collect_all_events(self) -> List[Dict[str, Any]]:
         """
         Collect events from all enabled collectors.
@@ -92,19 +119,36 @@ class LoglumenAgent:
         Returns:
             list: All collected events
         """
-        all_events = []
         enabled = self.collection_config['enabled_categories']
         max_lines = self.collection_config['max_lines_per_log']
         hours = self.collection_config['hours_lookback']
 
-        print(f"[INFO] Collecting events from {len(enabled)} categories...")
+        if self.os_type == 'windows':
+            return self._collect_windows_events(enabled, hours, max_lines)
+        return self._collect_linux_events(enabled, hours, max_lines)
 
-        # Auth, privilege, remote
-        if 'auth' in enabled:
+    def _collect_linux_events(self, enabled, hours, max_lines):
+        """Collect events using Linux collectors."""
+        from linux.auth_unified import collect_auth_events
+        from linux.system import collect_system_events
+        from linux.service import collect_service_events
+        from linux.software import collect_software_events
+
+        all_events = []
+
+        print(f"[INFO] Collecting events from {len(enabled)} categories (Linux)...")
+
+        # Auth-related categories (authentication, privilege_escalation, remote_access)
+        # These all come from the same collector
+        if self._category_enabled(enabled, 'authentication', 'privilege_escalation', 'remote_access', 'auth'):
             try:
                 events = collect_auth_events(hours=hours, max_lines=max_lines)
                 all_events.extend(events)
-                print(f"  [OK] Auth: {len(events)} events")
+                # Count by category
+                auth_count = len([e for e in events if e['category'] == 'authentication'])
+                priv_count = len([e for e in events if e['category'] == 'privilege_escalation'])
+                remote_count = len([e for e in events if e['category'] == 'remote_access'])
+                print(f"  [OK] Authentication: {auth_count}, Privilege: {priv_count}, Remote: {remote_count}")
             except Exception as e:
                 print(f"  [ERROR] Auth collector failed: {e}")
 
@@ -134,6 +178,75 @@ class LoglumenAgent:
                 print(f"  [OK] Software: {len(events)} events")
             except Exception as e:
                 print(f"  [ERROR] Software collector failed: {e}")
+
+        return all_events
+
+    def _collect_windows_events(self, enabled, hours, max_items):
+        """Collect events using Windows collectors."""
+        from windows.auth import collect_auth_events as win_collect_auth
+        from windows.privilege import collect_privilege_events
+        from windows.remote import collect_remote_events
+        from windows.system import collect_system_events as win_collect_system
+        from windows.service import collect_service_events as win_collect_service
+        from windows.software import collect_software_events as win_collect_software
+
+        all_events = []
+
+        print(f"[INFO] Collecting events from {len(enabled)} categories (Windows)...")
+
+        # Authentication
+        if self._category_enabled(enabled, 'authentication', 'auth'):
+            try:
+                events = win_collect_auth(hours=hours, max_events=max_items)
+                all_events.extend(events)
+                print(f"  [OK] Authentication: {len(events)} events")
+            except Exception as e:
+                print(f"  [ERROR] Windows auth collector failed: {e}")
+
+        # Privilege escalation
+        if self._category_enabled(enabled, 'privilege', 'privilege_escalation'):
+            try:
+                events = collect_privilege_events(hours=hours, max_events=max_items)
+                all_events.extend(events)
+                print(f"  [OK] Privilege: {len(events)} events")
+            except Exception as e:
+                print(f"  [ERROR] Windows privilege collector failed: {e}")
+
+        # Remote access
+        if self._category_enabled(enabled, 'remote', 'remote_access'):
+            try:
+                events = collect_remote_events(hours=hours, max_events=max_items)
+                all_events.extend(events)
+                print(f"  [OK] Remote: {len(events)} events")
+            except Exception as e:
+                print(f"  [ERROR] Windows remote collector failed: {e}")
+
+        # System crashes
+        if 'system' in enabled:
+            try:
+                events = win_collect_system(hours=hours, max_events=max_items)
+                all_events.extend(events)
+                print(f"  [OK] System: {len(events)} events")
+            except Exception as e:
+                print(f"  [ERROR] Windows system collector failed: {e}")
+
+        # Service failures
+        if 'service' in enabled:
+            try:
+                events = win_collect_service(hours=hours, max_events=max_items)
+                all_events.extend(events)
+                print(f"  [OK] Service: {len(events)} events")
+            except Exception as e:
+                print(f"  [ERROR] Windows service collector failed: {e}")
+
+        # Software changes
+        if 'software' in enabled:
+            try:
+                events = win_collect_software(hours=hours, max_events=max_items)
+                all_events.extend(events)
+                print(f"  [OK] Software: {len(events)} events")
+            except Exception as e:
+                print(f"  [ERROR] Windows software collector failed: {e}")
 
         return all_events
 

@@ -178,6 +178,158 @@ body {
     font-size: 12px;
 }
 
+/* Nodes section */
+.nodes-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.nodes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.nodes-header h2 {
+    font-size: 20px;
+    color: #2c3e50;
+}
+
+.toggle-nodes-button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease;
+}
+
+.toggle-nodes-button:hover {
+    background: #2c80b4;
+}
+
+.nodes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.node-card {
+    background: #fdfdfd;
+    border: 1px solid #ecf0f1;
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.node-card:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.node-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.node-ip {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.node-count {
+    font-size: 24px;
+    font-weight: bold;
+    color: #34495e;
+}
+
+.node-metadata {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    color: #566573;
+}
+
+.node-view-button {
+    align-self: flex-start;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    background: #2ecc71;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.node-view-button:hover {
+    background: #27ae60;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 15px;
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.node-detail-header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.node-detail-header h1 {
+    margin-bottom: 12px;
+    color: #2c3e50;
+}
+
+.node-detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 14px;
+    color: #566573;
+}
+
+.node-detail-meta span {
+    background: #f4f6f7;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+.node-events-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.node-events-section h2 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
 /* Recent Events */
 #recent-events-section {
     background: white;

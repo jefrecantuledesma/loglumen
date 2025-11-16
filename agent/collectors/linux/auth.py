@@ -204,7 +204,7 @@ class LinuxAuthCollector:
 
             # Create the event
             return create_event(
-                category="auth",
+                category="remote_access",
                 event_type="ssh_login_success",
                 severity="info",
                 message=f"User {username} logged in via SSH from {remote_ip}",
@@ -277,7 +277,7 @@ class LinuxAuthCollector:
 
             # Create the event
             return create_event(
-                category="auth",
+                category="remote_access",
                 event_type="ssh_login_failed",
                 severity="warning",
                 message=f"Failed SSH login for {username} from {remote_ip} - {reason}",
@@ -343,7 +343,7 @@ class LinuxAuthCollector:
 
             # Create the event
             return create_event(
-                category="privilege",
+                category="privilege_escalation",
                 event_type="sudo_used",
                 severity="info",
                 message=f"User {username} used sudo to run: {command}",
@@ -410,7 +410,7 @@ class LinuxAuthCollector:
             message = f"User {username} {'switched to' if success else 'failed to switch to'} {target_user}"
 
             return create_event(
-                category="privilege",
+                category="privilege_escalation",
                 event_type=event_type,
                 severity=severity,
                 message=message,
@@ -471,7 +471,7 @@ class LinuxAuthCollector:
             message = f"Local {'login' if success else 'login failed'} for user {username}"
 
             return create_event(
-                category="auth",
+                category="authentication",
                 event_type=event_type,
                 severity=severity,
                 message=message,
