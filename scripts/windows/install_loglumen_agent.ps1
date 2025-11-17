@@ -7,8 +7,10 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     exit 1
 }
 
+# Script is in scripts/windows/, need to go up 2 levels to reach repo root
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$repoRoot = Split-Path -Parent $scriptDir
+$scriptsDir = Split-Path -Parent $scriptDir
+$repoRoot = Split-Path -Parent $scriptsDir
 $agentDir = Join-Path $repoRoot "agent"
 $configDir = Join-Path $env:ProgramData "Loglumen"
 $configPath = Join-Path $configDir "agent.toml"
@@ -33,9 +35,10 @@ if (-not (Test-Path $configPath)) {
     Copy-Item $sourceConfig $configPath -Force
 }
 
-$python = Get-Command python -ErrorAction SilentlyContinue
+# Prefer py launcher over python command (avoids Windows Store stub)
+$python = Get-Command py -ErrorAction SilentlyContinue
 if (-not $python) {
-    $python = Get-Command py -ErrorAction SilentlyContinue
+    $python = Get-Command python -ErrorAction SilentlyContinue
 }
 if (-not $python) {
     Write-Error "Python interpreter not found in PATH. Install Python 3 and rerun."
@@ -43,15 +46,32 @@ if (-not $python) {
 }
 $pythonPath = $python.Source
 
+# Verify it's a real Python installation
+$version = & $pythonPath --version 2>&1
+if ($version -notmatch "Python \d+\.\d+") {
+    Write-Error "Python command found but appears invalid. Output: $version"
+    Write-Error "Please install Python from python.org or ensure 'py' launcher is available."
+    exit 1
+}
+
 $action = New-ScheduledTaskAction -Execute $pythonPath -Argument "`"$agentDir\main.py`" --config `"$configPath`"" -WorkingDirectory $agentDir
 $trigger = New-ScheduledTaskTrigger -AtStartup
 $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest
 
+# Settings for long-running daemon
+$settings = New-ScheduledTaskSettingsSet `
+    -AllowStartIfOnBatteries `
+    -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable `
+    -RunOnlyIfNetworkAvailable `
+    -DontStopOnIdleEnd `
+    -ExecutionTimeLimit (New-TimeSpan -Days 0)  # No time limit (runs indefinitely)
+
 Write-Host "[+] Registering scheduled task '$TaskName'"
-Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Force | Out-Null
+Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
 
 Write-Host "[+] Starting scheduled task"
 Start-ScheduledTask -TaskName $TaskName
 
-Write-Host "[✓] Loglumen agent installed as startup task using $pythonPath"
+Write-Host "[OK] Loglumen agent installed as startup task using $pythonPath"
 Write-Host "    Config file: $configPath"
