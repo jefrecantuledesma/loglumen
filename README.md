@@ -448,7 +448,7 @@ The agent needs administrator/root access to read system logs:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the GNU GPL V3 License - see the LICENSE file for details.
 
 ## Getting Help
 
