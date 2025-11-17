@@ -5,7 +5,8 @@ const decodedHost = hostParam ? decodeURIComponent(hostParam) : '';
 let nodeEvents = [];
 const nodeFilters = {
     severity: 'all',
-    category: 'all'
+    category: 'all',
+    sort: 'newest'
 };
 
 async function initNodePage() {
@@ -49,6 +50,7 @@ function setupNodeFilters() {
     const severityFilter = document.getElementById('node-severity-filter');
     const categoryFilter = document.getElementById('node-category-filter');
     const resetButton = document.getElementById('node-reset-filters');
+    const sortFilter = document.getElementById('node-sort-filter');
 
     if (severityFilter) {
         severityFilter.addEventListener('change', (e) => {
@@ -68,12 +70,23 @@ function setupNodeFilters() {
         resetButton.addEventListener('click', () => {
             nodeFilters.severity = 'all';
             nodeFilters.category = 'all';
+            nodeFilters.sort = 'newest';
             if (severityFilter) {
                 severityFilter.value = 'all';
             }
             if (categoryFilter) {
                 categoryFilter.value = 'all';
             }
+            if (sortFilter) {
+                sortFilter.value = 'newest';
+            }
+            renderNodeEvents();
+        });
+    }
+
+    if (sortFilter) {
+        sortFilter.addEventListener('change', (e) => {
+            nodeFilters.sort = e.target.value;
             renderNodeEvents();
         });
     }
@@ -135,6 +148,9 @@ function getFilteredNodeEvents() {
     let filtered = [...nodeEvents];
 
     filtered.sort((a, b) => new Date(b.time) - new Date(a.time));
+    if (nodeFilters.sort === 'oldest') {
+        filtered.reverse();
+    }
 
     if (nodeFilters.severity !== 'all') {
         filtered = filtered.filter(event =>

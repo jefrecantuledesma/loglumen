@@ -5,7 +5,8 @@ let allNodes = [];
 let showAllNodes = false;
 let currentFilters = {
     severity: 'all',
-    category: 'all'
+    category: 'all',
+    sort: 'newest'
 };
 const REFRESH_INTERVAL = 5000; // 5 seconds
 
@@ -37,6 +38,7 @@ function setupFilters() {
     const severityFilter = document.getElementById('severity-filter');
     const categoryFilter = document.getElementById('category-filter');
     const resetButton = document.getElementById('reset-filters');
+    const sortFilter = document.getElementById('sort-filter');
 
     severityFilter.addEventListener('change', (e) => {
         currentFilters.severity = e.target.value;
@@ -51,10 +53,19 @@ function setupFilters() {
     resetButton.addEventListener('click', () => {
         severityFilter.value = 'all';
         categoryFilter.value = 'all';
+        if (sortFilter) sortFilter.value = 'newest';
         currentFilters.severity = 'all';
         currentFilters.category = 'all';
+        currentFilters.sort = 'newest';
         applyFilters();
     });
+
+    if (sortFilter) {
+        sortFilter.addEventListener('change', (e) => {
+            currentFilters.sort = e.target.value;
+            applyFilters();
+        });
+    }
 }
 
 function setupNodesUI() {
@@ -278,7 +289,7 @@ function applyFilters() {
     }
 
     // Take top 50 (increased from 10 to show more filtered results)
-    filteredEvents = filteredEvents.slice(0, 50);
+    filteredEvents = sortEvents(filteredEvents, currentFilters.sort).slice(0, 50);
 
     // Update display
     if (filteredEvents.length === 0) {
@@ -425,6 +436,14 @@ function formatCategorySummary(counts) {
 }
 
 // Create event item HTML
+function sortEvents(events, order) {
+    const sorted = [...events].sort((a, b) => new Date(b.time) - new Date(a.time));
+    if (order === 'oldest') {
+        sorted.reverse();
+    }
+    return sorted;
+}
+
 function formatEventTimestamp(timestamp) {
     if (!timestamp) {
         return new Date().toLocaleString();
