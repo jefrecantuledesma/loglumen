@@ -148,42 +148,7 @@ loglumen/
 └── docs/               # Additional documentation
 ```
 
-## For Collaborators New to Python
-
-### Running Python Files
-```bash
-# Run a Python script
-python script_name.py
-
-# Or on some systems
-python3 script_name.py
-```
-
-### Installing Python Packages
-```bash
-# Install from requirements file
-pip install -r requirements.txt
-
-# Install a specific package
-pip install package_name
-```
-
-### Common Python Concepts You'll See
-- **Imports**: `import os` - brings in functionality from other files/libraries
-- **Functions**: `def function_name():` - reusable blocks of code
-- **Dictionaries**: `{"key": "value"}` - Python's version of JSON objects
-- **Lists**: `[1, 2, 3]` - ordered collections of items
-
-## Next Steps
-
-1. **Implement Agent Collectors**: Write Python scripts in `agent/collectors/windows/` and `agent/collectors/linux/` to parse specific log files
-2. **Implement Server API**: Build the Rust server to receive JSON events
-3. **Add Database**: Store events in a database (SQLite, PostgreSQL, etc.)
-4. **Build Web Dashboard**: Create a web interface to view events
-5. **Add Deployment Scripts**: Create Docker containers for easy deployment
-
 ## Getting Help
 
 - See `agent/collectors/README.md` for detailed collector implementation guide
 - See `config/README.md` for configuration options
-- See `CLAUDE.md` for development guidance
